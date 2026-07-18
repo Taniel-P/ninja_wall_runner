@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.wallrunner',
-  appName: 'Wall Runner',
+  appId: 'com.taniel.ninjawallrunner',
+  appName: 'Ninja Wall Runner',
   webDir: 'dist',
   bundledWebRuntime: false,
 };

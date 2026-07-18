@@ -37,10 +37,40 @@ export function getNickname(): string | null {
   return localStorage.getItem(NICKNAME_KEY);
 }
 
+// Best-effort blocklist for nicknames, which are shown publicly to every
+// player on the global leaderboard. Not exhaustive - catches common
+// profanity/slurs (with basic leetspeak substitutions) and swaps the whole
+// nickname for a random clean one rather than partially masking it, since a
+// masked word (e.g. "f***") is still just as recognizable.
+const NICKNAME_BLOCKLIST = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'piss',
+  'cock', 'pussy', 'slut', 'whore', 'fag', 'faggot', 'nigger', 'nigga',
+  'retard', 'rape', 'nazi', 'hitler',
+];
+
+function normalizeForFilter(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/@/g, 'a')
+    .replace(/\$/g, 's');
+}
+
+function containsBlockedContent(nickname: string): boolean {
+  const normalized = normalizeForFilter(nickname);
+  return NICKNAME_BLOCKLIST.some((word) => normalized.includes(word));
+}
+
 export function setNickname(nickname: string) {
   const trimmed = nickname.trim().slice(0, 20);
   if (trimmed.length === 0) return;
-  localStorage.setItem(NICKNAME_KEY, trimmed);
+  const clean = containsBlockedContent(trimmed) ? randomDefaultNickname() : trimmed;
+  localStorage.setItem(NICKNAME_KEY, clean);
 }
 
 // Whether the one-time nickname prompt has been shown yet (regardless of
