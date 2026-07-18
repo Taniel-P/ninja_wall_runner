@@ -1,0 +1,27 @@
+{
+  "idle": {
+    "frames": 10,
+    "frameWidth": 97,
+    "frameHeight": 184
+  },
+  "run": {
+    "frames": 10,
+    "frameWidth": 152,
+    "frameHeight": 192
+  },
+  "jump": {
+    "frames": 10,
+    "frameWidth": 152,
+    "frameHeight": 203
+  },
+  "slide": {
+    "frames": 10,
+    "frameWidth": 157,
+    "frameHeight": 147
+  },
+  "dead": {
+    "frames": 10,
+    "frameWidth": 202,
+    "frameHeight": 209
+  }
+}

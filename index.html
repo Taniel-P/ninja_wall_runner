@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Ninja Wall Runner</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05080f; font-family: Inter, system-ui, sans-serif; }
+      body { display:flex; align-items:center; justify-content:center; }
+      canvas { width:100vw; height:100vh; display:block; touch-action:none; }
+      #ui { position:fixed; inset:0; pointer-events:none; color:white; }
+      .hud { position:absolute; top:16px; left:16px; font-size:14px; opacity:0.85; }
+      .hint { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); font-size:12px; opacity:0.7; text-align:center; }
+
+      .leaderboard-toggle {
+        position: absolute; top: 80px; right: 12px;
+        pointer-events: auto;
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(10,10,18,0.55);
+        color: #ffd66e;
+        font-size: 16px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+      }
+      .panel {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        pointer-events: auto;
+        background: rgba(12,10,20,0.94);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        padding: 16px;
+        width: min(300px, 84vw);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      }
+      .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; letter-spacing: 0.02em; }
+      .nickname-input {
+        width: 100%; box-sizing: border-box; padding: 8px 10px;
+        border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.06); color: white; font-size: 14px;
+      }
+      .nickname-input:focus { outline: 1px solid rgba(255,214,110,0.6); }
+      .panel-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+      .btn {
+        pointer-events: auto;
+        border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+        padding: 7px 14px; font-size: 13px; cursor: pointer;
+      }
+      .btn-primary { background: #c0392b; color: white; border-color: transparent; }
+      .btn-ghost { background: transparent; color: rgba(255,255,255,0.75); }
+      .leaderboard-list { max-height: 40vh; overflow-y: auto; font-size: 13px; }
+      .leaderboard-empty { opacity: 0.6; padding: 8px 0; }
+      .leaderboard-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .leaderboard-row.me { color: #ffd66e; font-weight: 600; }
+      .leaderboard-rank { opacity: 0.6; width: 24px; display: inline-block; }
+
+      .dpad {
+        position: absolute;
+        left: max(16px, env(safe-area-inset-left));
+        bottom: max(20px, env(safe-area-inset-bottom));
+        display: flex;
+        gap: 14px;
+      }
+      .dpad[hidden] { display: none; }
+      .jump-btn {
+        position: absolute;
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(28px, env(safe-area-inset-bottom));
+      }
+      .ctrl-btn {
+        pointer-events: auto;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+        width: 62px; height: 62px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(10,10,18,0.55);
+        color: rgba(255,255,255,0.9);
+        font-size: 24px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+      }
+      .ctrl-btn:active { background: rgba(255,214,110,0.35); border-color: rgba(255,214,110,0.6); }
+      .ctrl-btn[hidden] { display: none; }
+      .jump-btn.ctrl-btn {
+        width: 76px; height: 76px;
+        font-size: 26px;
+        color: #ffd66e;
+        border-color: rgba(255,214,110,0.4);
+      }
+
+      .menu-screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+        padding-bottom: max(56px, calc(env(safe-area-inset-bottom) + 36px));
+      }
+      .menu-screen[hidden] { display: none; }
+      .menu-buttons {
+        pointer-events: auto;
+        display: flex; flex-direction: column; gap: 16px;
+        width: min(300px, 82vw);
+      }
+      .pill-btn {
+        pointer-events: auto;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        border-radius: 999px;
+        padding: 16px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.2);
+      }
+      .pill-btn:active { transform: scale(0.97); }
+      .pill-primary {
+        background: linear-gradient(180deg, #d8492f, #a8332b);
+        color: #fff2e0;
+        border-color: rgba(255,214,110,0.55);
+        box-shadow: 0 6px 18px rgba(168,51,43,0.45);
+      }
+      .pill-secondary {
+        background: rgba(12,10,20,0.6);
+        color: #f0e6d2;
+        border-color: rgba(255,214,110,0.3);
+      }
+
+      .howto-panel { width: min(420px, 92vw); max-height: 86vh; overflow-y: auto; }
+      .howto-list { display: flex; flex-direction: column; gap: 16px; margin: 4px 0; }
+      .howto-row { display: flex; gap: 12px; align-items: center; }
+      .howto-img { width: 128px; height: auto; border-radius: 8px; border: 1px solid rgba(255,214,110,0.25); flex-shrink: 0; }
+      .howto-text { margin: 0; font-size: 13.5px; line-height: 1.45; color: #f0e6d2; }
+
+      .ending-continue {
+        position: absolute;
+        left: 50%;
+        bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px));
+        transform: translateX(-50%);
+        /* Stays in normal layout (unlike [hidden]/display:none) so its
+           position can be measured via getBoundingClientRect() even while
+           it's invisible - the credits crawl starts right above it. */
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .ending-continue.visible {
+        visibility: visible;
+        pointer-events: auto;
+      }
+      /* .pill-btn:active's transform: scale(...) would otherwise replace
+         (not combine with) the translateX(-50%) this button needs for its
+         own centering, snapping it sideways out from under the finger the
+         instant it's pressed. #id beats .class specificity regardless of
+         source order, so this reliably wins over that rule. */
+      #endingContinue:active {
+        transform: translateX(-50%) scale(0.97);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="ui">
+      <div id="gameChrome" hidden>
+        <div id="hudText" class="hud">Ninja Wall Runner · Arrows to move · Tap ⬤ to jump</div>
+        <div class="hint">Reach the glowing goal to clear the level</div>
+
+        <button id="leaderboardToggle" class="leaderboard-toggle" type="button" aria-label="View leaderboard">🏆</button>
+
+        <div id="dpad" class="dpad">
+          <button id="btnLeft" class="ctrl-btn" type="button" aria-label="Move left">◀</button>
+          <button id="btnRight" class="ctrl-btn" type="button" aria-label="Move right">▶</button>
+        </div>
+        <button id="btnJump" class="jump-btn ctrl-btn" type="button" aria-label="Jump">⬤</button>
+      </div>
+
+      <div id="menuScreen" class="menu-screen">
+        <div class="menu-buttons">
+          <button id="menuPlay" class="pill-btn pill-primary" type="button">Play</button>
+          <button id="menuLeaderboard" class="pill-btn pill-secondary" type="button">Leaderboard</button>
+          <button id="menuHowTo" class="pill-btn pill-secondary" type="button">How To Play</button>
+        </div>
+      </div>
+
+      <button id="endingContinue" class="pill-btn pill-primary ending-continue" type="button">Continue</button>
+
+      <div id="nicknamePrompt" class="panel nickname-panel" hidden>
+        <div class="panel-title">Join the global leaderboard</div>
+        <input id="nicknameInput" class="nickname-input" type="text" maxlength="20" placeholder="Enter a nickname" autocomplete="off" />
+        <div class="panel-actions">
+          <button id="nicknameSkip" class="btn btn-ghost" type="button">Skip</button>
+          <button id="nicknameSave" class="btn btn-primary" type="button">Save</button>
+        </div>
+      </div>
+
+      <div id="leaderboardPanel" class="panel leaderboard-panel" hidden>
+        <div class="panel-title">Global Leaderboard</div>
+        <div id="leaderboardList" class="leaderboard-list"></div>
+        <div class="panel-actions">
+          <button id="editNickname" class="btn btn-ghost" type="button">Edit name</button>
+          <button id="leaderboardClose" class="btn btn-primary" type="button">Close</button>
+        </div>
+      </div>
+
+      <div id="howToPanel" class="panel howto-panel" hidden>
+        <div class="panel-title">How To Play</div>
+        <div class="howto-list">
+          <div class="howto-row">
+            <img class="howto-img" src="/howto/reach-arch.png" alt="Ninja jumping toward the glowing torii arch" />
+            <p class="howto-text">Jump to the top to reach the arch.</p>
+          </div>
+          <div class="howto-row">
+            <img class="howto-img" src="/howto/wall-jump.png" alt="Ninja bouncing between two walls to climb higher" />
+            <p class="howto-text">Use the walls to jump higher.</p>
+          </div>
+          <div class="howto-row">
+            <img class="howto-img" src="/howto/chain-points.png" alt="Score multiplier climbing as wall jumps are chained together" />
+            <p class="howto-text">Earn more points as you string wall jumps together.</p>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button id="howToClose" class="btn btn-primary" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
