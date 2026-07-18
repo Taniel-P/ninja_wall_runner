@@ -806,12 +806,6 @@ function drawMenuScene() {
 }
 
 function drawHud() {
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.font = '14px sans-serif';
-  ctx.fillText(`Level ${level.id} - Climb higher: ${Math.round(player.y)} / ${level.height}`, 18, 28);
-  if (phase === 'playing') {
-    ctx.fillText('Climb, wall-jump, and double-jump to the summit', 18, 50);
-  }
   drawScoreHud(ctx, width, scoreState);
 }
 
@@ -1151,10 +1145,8 @@ function applyControlSchemeForDevice() {
   if (isTouchPrimaryDevice()) return;
   const dpad = document.getElementById('dpad');
   const jumpBtn = document.getElementById('btnJump');
-  const hudText = document.getElementById('hudText');
   if (dpad) dpad.hidden = true;
   if (jumpBtn) jumpBtn.hidden = true;
-  if (hudText) hudText.textContent = 'Ninja Wall Runner · Arrow keys to move · Space to jump';
 }
 
 // Same autoplay-gesture constraint as everywhere else in this file: try to
@@ -1175,6 +1167,14 @@ function playMenuMusicWithFallback() {
 }
 
 window.addEventListener('resize', resize);
+// WKWebView (Capacitor's iOS runtime) doesn't reliably dispatch a DOM
+// 'resize' event when its native frame settles into its final Auto Layout
+// size shortly after the page loads - the 'load'-time resize() below can
+// fire while the webview is still at a smaller transitional frame, leaving
+// the canvas's internal render scale locked to that stale, too-small size.
+// ResizeObserver reacts to the actual box size instead, so it always
+// catches the real final size regardless of whether 'resize' fires.
+new ResizeObserver(() => resize()).observe(document.documentElement);
 window.addEventListener('load', () => {
   resize();
   attachInput();

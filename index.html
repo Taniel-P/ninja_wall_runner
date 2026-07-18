@@ -12,8 +12,6 @@
       body { display:flex; align-items:center; justify-content:center; }
       canvas { width:100vw; height:100vh; display:block; touch-action:none; }
       #ui { position:fixed; inset:0; pointer-events:none; color:white; }
-      .hud { position:absolute; top:16px; left:16px; font-size:14px; opacity:0.85; }
-      .hint { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); font-size:12px; opacity:0.7; text-align:center; }
 
       .leaderboard-toggle {
         position: absolute; top: 80px; right: 12px;
@@ -167,9 +165,6 @@
     <canvas id="game"></canvas>
     <div id="ui">
       <div id="gameChrome" hidden>
-        <div id="hudText" class="hud">Ninja Wall Runner · Arrows to move · Tap ⬤ to jump</div>
-        <div class="hint">Reach the glowing goal to clear the level</div>
-
         <button id="leaderboardToggle" class="leaderboard-toggle" type="button" aria-label="View leaderboard">🏆</button>
 
         <div id="dpad" class="dpad">
