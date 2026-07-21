@@ -4,7 +4,7 @@ Reference copy for the App Store Connect submission form. Update the "Last updat
 whenever this changes for a new version.
 
 ## App name
-Ninja Wall Runner
+Ninja Wall Hopper
 
 ## Subtitle (max 30 chars)
 Wall-Jump Ninja Platformer
@@ -21,7 +21,7 @@ _(153/170 chars)_
 Master the wall jump. Chain kicks off opposing walls to climb higher, dodge hazards, and rack up
 combo multipliers on your way to the goal.
 
-Ninja Wall Runner is a physics-driven platformer built around one core skill: the wall jump. Every
+Ninja Wall Hopper is a physics-driven platformer built around one core skill: the wall jump. Every
 one of its 20 levels is hand-designed to test and reward it, from gentle introductions to tight,
 technical chains that demand pixel-perfect timing.
 

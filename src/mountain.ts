@@ -75,7 +75,8 @@ export function drawSky(ctx: CanvasRenderingContext2D, width: number, height: nu
 // forest's drawMountains / city's drawSkyline.
 type PeakLayerCache = { canvas: HTMLCanvasElement; offset: number };
 const peakCache = new Map<number, PeakLayerCache>();
-const PEAK_REGEN_THRESHOLD = 1.5;
+// See MOUNTAIN_REGEN_THRESHOLD in forest.ts for why this was raised from 1.5.
+const PEAK_REGEN_THRESHOLD = 15;
 
 export function drawPeaks(ctx: CanvasRenderingContext2D, width: number, height: number, cameraY: number) {
   const layers = [

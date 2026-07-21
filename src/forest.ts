@@ -54,7 +54,13 @@ export function drawSky(ctx: CanvasRenderingContext2D, width: number, height: nu
 // layer only when its phase has actually moved enough to matter.
 type MountainLayerCache = { canvas: HTMLCanvasElement; offset: number };
 const mountainCache = new Map<number, MountainLayerCache>();
-const MOUNTAIN_REGEN_THRESHOLD = 1.5; // in the same units as `offset` below
+// This gates regenerating the whole cached layer (a full canvas clear +
+// path fill) purely to shift a sine-wave phase by offset*0.01 radians - a
+// threshold of 1.5 means that's a ~0.015rad (imperceptible) shift, but
+// regen was firing on nearly every frame during any camera movement,
+// tanking real-device framerate. 15 still keeps the phase shift subtle
+// (~0.15rad) while cutting regen frequency by ~10x.
+const MOUNTAIN_REGEN_THRESHOLD = 15;
 
 export function drawMountains(ctx: CanvasRenderingContext2D, width: number, height: number, cameraY: number) {
   const layers = [

@@ -150,31 +150,32 @@ export function drawComboFx(ctx: CanvasRenderingContext2D, state: ScoreState, pl
 
 // --- Screen-space persistent HUD: current run total + best. Call after
 // the world transform has been restored (unscaled screen pixels).
-export function drawScoreHud(ctx: CanvasRenderingContext2D, width: number, state: ScoreState) {
+export function drawScoreHud(ctx: CanvasRenderingContext2D, width: number, state: ScoreState, safeAreaTop = 0) {
   const flash = state.bankFlashTimer > 0 ? state.bankFlashTimer / 0.5 : 0;
   const x = width - 18;
+  const y = safeAreaTop;
 
   ctx.textAlign = 'right';
   ctx.font = `bold ${28 + flash * 5}px sans-serif`;
   ctx.lineWidth = 3;
   ctx.strokeStyle = 'rgba(10,8,6,0.8)';
-  ctx.strokeText(state.totalScore.toLocaleString(), x, 40);
+  ctx.strokeText(state.totalScore.toLocaleString(), x, y + 40);
   ctx.fillStyle = `rgba(255,${225 - Math.floor(flash * 40)},${140 + Math.floor(flash * 60)},1)`;
-  ctx.fillText(state.totalScore.toLocaleString(), x, 40);
+  ctx.fillText(state.totalScore.toLocaleString(), x, y + 40);
 
   ctx.font = '11px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.fillText('SCORE', x, 16);
+  ctx.fillText('SCORE', x, y + 16);
 
   ctx.font = '12px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillText(`Best ${state.highScore.toLocaleString()}`, x, 58);
+  ctx.fillText(`Best ${state.highScore.toLocaleString()}`, x, y + 58);
 
   if (state.newHighScoreFlashTimer > 0) {
     const t = state.newHighScoreFlashTimer / 1.4;
     ctx.font = 'bold 13px sans-serif';
     ctx.fillStyle = `rgba(255,214,110,${Math.min(1, t * 2)})`;
-    ctx.fillText('NEW BEST!', x, 74);
+    ctx.fillText('NEW BEST!', x, y + 74);
   }
   ctx.textAlign = 'left';
 }

@@ -1,5 +1,6 @@
 node_modules
 dist
+app-store-screenshots
 .env
 .env.local
 ios

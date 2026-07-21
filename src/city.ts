@@ -62,7 +62,8 @@ export function drawSky(ctx: CanvasRenderingContext2D, width: number, height: nu
 // window rects every frame bought nothing visible.
 type SkylineLayerCache = { canvas: HTMLCanvasElement; offset: number };
 const skylineCache = new Map<number, SkylineLayerCache>();
-const SKYLINE_REGEN_THRESHOLD = 1.5;
+// See MOUNTAIN_REGEN_THRESHOLD in forest.ts for why this was raised from 1.5.
+const SKYLINE_REGEN_THRESHOLD = 15;
 
 export function drawSkyline(ctx: CanvasRenderingContext2D, width: number, height: number, cameraY: number) {
   const layers = [

@@ -8,7 +8,7 @@ import { LEVELS, type Level } from './levels';
 import { CalligraphyBanner, ShurikenTransition, EndingSequence, type EndingStage } from './sequence';
 import { createScoreState, registerWallJump, bankPendingScore, discardPendingScore, resetRun, updateScoreFx, drawComboFx, drawScoreHud } from './score';
 import { isLeaderboardEnabled, getNickname, setNickname, ensureNickname, hasBeenPromptedForNickname, markPromptedForNickname, submitScore, fetchTopScores, getDeviceId } from './leaderboard';
-import { playJump, playWallJump, playDoubleJump, playGoal, playFootstep, playExplosion, startRumble, stopRumble, playGong, playMusicTrack, stopMusic, unlockAudio, type MusicTrack } from './audio';
+import { playJump, playWallJump, playDoubleJump, playGoal, playFootstep, playExplosion, startRumble, stopRumble, playGong, playMusicTrack, stopMusic, unlockAudio, pauseForBackground, resumeFromBackground, type MusicTrack } from './audio';
 
 type Direction = -1 | 1;
 type Phase = 'menu' | 'intro' | 'playing' | 'victory' | 'ending';
@@ -212,6 +212,20 @@ const player: PlayerState = {
   visitedCorners: new Set<string>(),
   victory: false,
 };
+
+const safeAreaProbe = document.getElementById('safeAreaProbe');
+
+// Read fresh each time it's needed (drawHud(), every frame) rather than
+// cached from resize() - confirmed on-device that env(safe-area-inset-top)
+// doesn't necessarily resolve to its real value by the time resize() first
+// runs, and since resize() only re-runs when ResizeObserver detects an
+// actual document size change, a safe-area value that settles in later
+// without the document's overall size changing was getting stuck at its
+// stale (0) initial reading forever. getBoundingClientRect() on a 1x1
+// already-positioned element is cheap enough to just call every frame.
+function getSafeAreaTop(): number {
+  return safeAreaProbe ? safeAreaProbe.getBoundingClientRect().top : 0;
+}
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
@@ -600,7 +614,7 @@ function returnToMenuFromEnding() {
   phase = 'menu';
   stopRumble(); // safety net - normally already stopped when 'shake' ends
   menuScreenEl.hidden = false;
-  menuBanner.show('Ninja Wall Runner', { inDur: 0.6, holdDur: 999999, outDur: 0.6, color: '#e8d4a0' });
+  menuBanner.show('Ninja Wall Hopper', { inDur: 0.6, holdDur: 999999, outDur: 0.6, color: '#e8d4a0' });
   void playMusicTrack('menu');
 }
 
@@ -806,7 +820,7 @@ function drawMenuScene() {
 }
 
 function drawHud() {
-  drawScoreHud(ctx, width, scoreState);
+  drawScoreHud(ctx, width, scoreState, getSafeAreaTop());
 }
 
 function drawSequenceOverlays() {
@@ -935,7 +949,11 @@ function attachHoldButton(id: string, onPress: () => void, onRelease: () => void
 }
 
 function attachInput() {
+  const isTypingTarget = (target: EventTarget | null) =>
+    target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+
   window.addEventListener('keydown', (event) => {
+    if (isTypingTarget(event.target)) return;
     if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') keyboard.left = true;
     if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') keyboard.right = true;
     if (event.key === ' ' || event.key === 'ArrowUp' || event.key === 'w' || event.key === 'W') {
@@ -948,6 +966,7 @@ function attachInput() {
   });
 
   window.addEventListener('keyup', (event) => {
+    if (isTypingTarget(event.target)) return;
     if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') keyboard.left = false;
     if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') keyboard.right = false;
     if (event.key === ' ' || event.key === 'ArrowUp' || event.key === 'w' || event.key === 'W') keyboard.jump = false;
@@ -1166,6 +1185,35 @@ function playMenuMusicWithFallback() {
   });
 }
 
+// WKWebView (unlike regular Mobile Safari) doesn't reliably respect
+// -webkit-touch-callout/-webkit-user-select for suppressing its long-press
+// magnifying loupe / text-selection gesture - CSS alone leaves it in place.
+// Intercepting touchstart and preventing its default action stops that
+// gesture recognizer from ever engaging. Scoped to just the canvas and the
+// hold-to-play dpad/jump buttons (the surfaces actually held during play,
+// where this was reported) rather than the whole document - those don't
+// rely on the browser's synthesized click event (they use Pointer Events
+// or, for the canvas, nothing at all), unlike the menu/panel buttons
+// elsewhere, which do and would silently stop responding if this were
+// applied document-wide (calling preventDefault() on touchstart suppresses
+// the synthetic click that follows it).
+function suppressLoupeGesture(el: Element) {
+  el.addEventListener('touchstart', (event) => {
+    if ((event as TouchEvent).touches.length === 1) event.preventDefault();
+  }, { passive: false });
+}
+suppressLoupeGesture(canvas);
+document.querySelectorAll('.ctrl-btn').forEach(suppressLoupeGesture);
+
+document.addEventListener('visibilitychange', () => {
+  console.log('[main] visibilitychange fired, document.hidden:', document.hidden);
+  if (document.hidden) {
+    pauseForBackground();
+  } else {
+    resumeFromBackground();
+  }
+});
+
 window.addEventListener('resize', resize);
 // WKWebView (Capacitor's iOS runtime) doesn't reliably dispatch a DOM
 // 'resize' event when its native frame settles into its final Auto Layout
@@ -1181,7 +1229,7 @@ window.addEventListener('load', () => {
   applyControlSchemeForDevice();
   const leaderboard = attachLeaderboardUI();
   attachMenuUI(leaderboard);
-  menuBanner.show('Ninja Wall Runner', { inDur: 0.6, holdDur: 999999, outDur: 0.6, color: '#e8d4a0' });
+  menuBanner.show('Ninja Wall Hopper', { inDur: 0.6, holdDur: 999999, outDur: 0.6, color: '#e8d4a0' });
   playMenuMusicWithFallback();
   Promise.all([
     document.fonts.load(`64px MaShanZheng`),

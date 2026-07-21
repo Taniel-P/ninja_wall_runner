@@ -76,7 +76,8 @@ export function drawSky(ctx: CanvasRenderingContext2D, width: number, height: nu
 // regen-threshold trick as the other themes' parallax layers.
 type RuinLayerCache = { canvas: HTMLCanvasElement; offset: number };
 const ruinCache = new Map<number, RuinLayerCache>();
-const RUIN_REGEN_THRESHOLD = 1.5;
+// See MOUNTAIN_REGEN_THRESHOLD in forest.ts for why this was raised from 1.5.
+const RUIN_REGEN_THRESHOLD = 15;
 
 let guardianCache: { canvas: HTMLCanvasElement; key: string } | null = null;
 
